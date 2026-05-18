@@ -173,7 +173,25 @@ Browser
 
 ## SPA routing (React Router)
 
-`frontend/public/_redirects` sends all paths to `index.html` so `/admin` works on Render static hosting.
+React Router handles `/admin` in the browser, but Render’s static host must **rewrite** unknown paths to `index.html`. Without this, visiting `/admin` directly returns **Not Found**.
+
+### Manual deploy (required)
+
+1. Open your **static site** on Render (the frontend service).
+2. Go to **Redirects** (or **Redirects / Rewrites**).
+3. Add a rule:
+
+| Field | Value |
+|-------|--------|
+| Source | `/*` |
+| Destination | `/index.html` |
+| Action | **Rewrite** (not Redirect) |
+
+4. Save. Test `https://your-site.onrender.com/admin` in a new tab.
+
+### Blueprint deploy
+
+`render.yaml` includes the same rewrite under `catalog-web` → `routes`. If you deployed before that was added, add the rule in the dashboard as above.
 
 ---
 
@@ -202,7 +220,7 @@ Browser
 | API 502 on cold start | Wait 1 min; free tier waking up |
 | Database connection failed | Check `DATABASE_URL`; use Internal URL if both on Render |
 | Admin upload disabled | Add all `R2_*` vars on API |
-| `/admin` 404 on refresh | Ensure `_redirects` exists in `frontend/public/` |
+| `/admin` shows Not Found | Add Render rewrite: `/*` → `/index.html` (Rewrite) on the static site |
 | Wrong API in production | Rebuild static site after changing `VITE_API_URL` |
 
 More: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
@@ -215,5 +233,5 @@ More: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 |------|---------|
 | `render.yaml` | Blueprint definition |
 | `backend/requirements.txt` | Python dependencies |
-| `frontend/public/_redirects` | SPA fallback for static host |
+| `render.yaml` → `catalog-web.routes` | SPA rewrite for Blueprint deploys |
 | `backend/app/config.py` | Env + Postgres URL normalization |
