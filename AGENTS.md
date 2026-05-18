@@ -27,6 +27,7 @@ A **tile design catalog** for manufacturing/wholesale: public browse/search/filt
 | [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) | DevOps | Env vars |
 | [docs/R2_SETUP.md](docs/R2_SETUP.md) | DevOps | Cloudflare R2 + CDN |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Support | Common issues |
+| [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md) | DevOps | Render deployment |
 | [docs/AI_CONTEXT.md](docs/AI_CONTEXT.md) | AI | Dense full-context reference |
 
 ## Critical conventions

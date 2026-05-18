@@ -1,9 +1,19 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = BACKEND_DIR / ".env"
+
+
+def normalize_database_url(url: str) -> str:
+    """Render/Heroku provide postgres:// or postgresql:// — psycopg3 needs postgresql+psycopg://"""
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgresql://") and "+psycopg" not in url and "+psycopg2" not in url:
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
 
 
 class Settings(BaseSettings):
@@ -21,10 +31,15 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     model_config = SettingsConfigDict(
-        env_file=str(ENV_FILE),
+        env_file=str(ENV_FILE) if ENV_FILE.is_file() else None,
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def fix_database_url(cls, v: str) -> str:
+        return normalize_database_url(v) if v else v
 
 
 settings = Settings()

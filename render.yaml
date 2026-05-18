@@ -1,0 +1,61 @@
+# Render Blueprint — deploy entire stack from the Render Dashboard:
+# New → Blueprint → connect this repo → Apply
+#
+# After deploy: set R2_* env vars on catalog-api (see docs/DEPLOY_RENDER.md)
+
+databases:
+  - name: catalog-db
+    databaseName: catalog
+    user: catalog
+    plan: free
+
+services:
+  # FastAPI backend
+  - type: web
+    name: catalog-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: catalog-db
+          property: connectionString
+      - key: ADMIN_API_KEY
+        generateValue: true
+      # Set in Dashboard after deploy if catalog cannot reach API (browser CORS).
+      # Value must be your static site URL, e.g. https://catalog-web.onrender.com
+      - key: CORS_ORIGINS
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: R2_PUBLIC_CDN_URL
+        sync: false
+      - key: R2_USE_FIXED_IMAGE_NAME
+        value: "false"
+
+  # React static site (Vite)
+  - type: web
+    name: catalog-web
+    runtime: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: catalog-api
+          envVarKey: RENDER_EXTERNAL_URL

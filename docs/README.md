@@ -14,6 +14,7 @@ Complete documentation for the **Tile Design Catalog** application.
 | Work on the database | [DATABASE.md](DATABASE.md) |
 | Set environment variables | [ENVIRONMENT.md](ENVIRONMENT.md) |
 | Fix a problem | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Deploy online (Render) | [DEPLOY_RENDER.md](DEPLOY_RENDER.md) |
 | Give an AI full project context | [AI_CONTEXT.md](AI_CONTEXT.md) or [../AGENTS.md](../AGENTS.md) |
 
 ## Project overview

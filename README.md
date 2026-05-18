@@ -27,7 +27,8 @@ npm run dev
 - **Admin:** http://localhost:5173/admin  
 - **API docs:** http://127.0.0.1:8000/docs  
 
-Full setup: **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)**
+Full setup: **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)**  
+Deploy online: **[docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md)** (includes root `render.yaml` Blueprint)
 
 ## Documentation
 
