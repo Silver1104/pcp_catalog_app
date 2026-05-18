@@ -120,7 +120,13 @@ porcelain/marble-look/porcelain-marble-look-0002.webp
 
 ### Cannot sign in
 
-**Fix:** Match `ADMIN_API_KEY` in `.env` exactly. Restart API after changing key. Clear session: sign out or clear site data.
+**Fix:**
+
+1. **Production (Render):** Copy `ADMIN_API_KEY` from the **API** service environment in the Render dashboard — not from your laptop’s `backend/.env` unless you set the same value on Render.
+2. **Local:** Match `ADMIN_API_KEY` in `backend/.env` exactly.
+3. Restart the API after changing the key on the server.
+4. Sign out on `/admin`, or clear site data / `sessionStorage` key `catalog_admin_key`, then sign in again.
+5. Remove `VITE_ADMIN_API_KEY` from `frontend/.env` if present — it does not belong in the frontend and was never used correctly.
 
 ---
 

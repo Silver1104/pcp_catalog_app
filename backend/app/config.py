@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     def fix_database_url(cls, v: str) -> str:
         return normalize_database_url(v) if v else v
 
+    @field_validator("admin_api_key", mode="before")
+    @classmethod
+    def strip_admin_api_key(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
+
 
 settings = Settings()
 

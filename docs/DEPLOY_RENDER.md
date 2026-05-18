@@ -55,7 +55,10 @@ Use your exact static site URL (no trailing slash). Save to redeploy the API.
 ### 5. Save your admin key
 
 1. Open **catalog-api** → **Environment**
-2. Copy **`ADMIN_API_KEY`** (auto-generated) — you need this for `/admin`
+2. Copy **`ADMIN_API_KEY`** exactly (auto-generated on Blueprint, or whatever you set manually)
+3. Open `/admin` on the **static site** and paste that key at sign-in
+
+The key on Render is **not** the same as your local `backend/.env` unless you copied it there yourself. Do not put the admin key in `VITE_*` frontend env vars — it would be public in the JS bundle.
 3. Sign in at `https://catalog-web.onrender.com/admin`
 
 ### 6. Configure R2 (for image uploads)
@@ -221,6 +224,7 @@ React Router handles `/admin` in the browser, but Render’s static host must **
 | Database connection failed | Check `DATABASE_URL`; use Internal URL if both on Render |
 | Admin upload disabled | Add all `R2_*` vars on API |
 | `/admin` shows Not Found | Add Render rewrite: `/*` → `/index.html` (Rewrite) on the static site |
+| Invalid or missing admin key | Use **catalog-api** → `ADMIN_API_KEY` (not local `.env`); sign out and sign in again |
 | Wrong API in production | Rebuild static site after changing `VITE_API_URL` |
 
 More: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
