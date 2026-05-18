@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-50: #f4f7f6;
+  --brand-100: #e3ebe8;
+  --brand-200: #c5d6d0;
+  --brand-300: #9bb8ae;
+  --brand-400: #6f9588;
+  --brand-500: #4f7769;
+  --brand-600: #3d5f54;
+  --brand-700: #334d45;
+  --brand-800: #2b403a;
+  --brand-900: #253632;
+  --brand-950: #121f1c;
+  --accent: #c9a227;
+  --accent-light: #e8c96a;
+  --accent-dark: #9a7b1a;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply bg-brand-50 text-brand-900 font-sans;
+  }
+}
