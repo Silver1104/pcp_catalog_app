@@ -7,7 +7,7 @@ databases:
   - name: catalog-db
     databaseName: catalog
     user: catalog
-    plan: starter
+    plan: free
 
 services:
   # FastAPI backend
@@ -15,7 +15,7 @@ services:
     name: catalog-api
     runtime: python
     rootDir: backend
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
@@ -50,7 +50,7 @@ services:
     name: catalog-web
     runtime: static
     rootDir: frontend
-    plan: starter
+    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
