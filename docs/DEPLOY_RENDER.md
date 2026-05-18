@@ -226,6 +226,7 @@ React Router handles `/admin` in the browser, but Render’s static host must **
 | `/admin` shows Not Found | Add Render rewrite: `/*` → `/index.html` (Rewrite) on the static site |
 | Invalid or missing admin key | Use **catalog-api** → `ADMIN_API_KEY` (not local `.env`); sign out and sign in again |
 | Wrong API in production | Rebuild static site after changing `VITE_API_URL` |
+| Bulk upload killed API / no products | Large uploads block health checks; use latest code (batched upload) and re-upload |
 
 More: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 

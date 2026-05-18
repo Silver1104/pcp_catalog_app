@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     r2_endpoint_url: str = ""
     r2_use_fixed_image_name: bool = False
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    # Commit every N images during bulk upload (survives long runs / Render health checks)
+    bulk_upload_chunk_size: int = 5
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE) if ENV_FILE.is_file() else None,

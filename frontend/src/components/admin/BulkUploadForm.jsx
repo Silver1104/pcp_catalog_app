@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { bulkUploadProducts, checkTaxonomy, fetchTaxonomy } from "../../api/admin";
+import { bulkUploadProductsBatched, checkTaxonomy, fetchTaxonomy } from "../../api/admin";
 import TaxonomySelect from "./TaxonomySelect";
 
 const inputClass =
@@ -15,6 +15,7 @@ export default function BulkUploadForm({ onDone, onCancel, r2Configured }) {
   const [warnings, setWarnings] = useState([]);
   const [acknowledged, setAcknowledged] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [progress, setProgress] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -57,14 +58,20 @@ export default function BulkUploadForm({ onDone, onCancel, r2Configured }) {
 
     setSaving(true);
     setError("");
+    setProgress(null);
     try {
-      const result = await bulkUploadProducts({
-        files,
-        product_category: category,
-        subcategory,
-        company_name: companyName,
-        dimensions_options: dimensions,
-      });
+      const result = await bulkUploadProductsBatched(
+        {
+          files,
+          product_category: category,
+          subcategory,
+          company_name: companyName,
+          dimensions_options: dimensions,
+        },
+        {
+          onProgress: (p) => setProgress(p),
+        }
+      );
       if (result.warnings?.length) {
         alert(`Created ${result.count} products.\n\nNotes:\n${result.warnings.join("\n")}`);
       }
@@ -82,7 +89,7 @@ export default function BulkUploadForm({ onDone, onCancel, r2Configured }) {
         <h3 className="font-display text-lg font-semibold text-brand-900">Bulk upload images</h3>
         <p className="mt-1 text-sm text-brand-500">
           Upload multiple images for one category + subcategory. Design numbers and names are assigned
-          automatically in sequence.
+          automatically in sequence. Large sets upload in batches of 8 to stay within server limits.
         </p>
       </div>
 
@@ -141,6 +148,12 @@ export default function BulkUploadForm({ onDone, onCancel, r2Configured }) {
           )}
         </div>
       </div>
+
+      {progress && (
+        <p className="text-sm text-brand-600">
+          Uploading batch {progress.batch} of {progress.totalBatches} ({progress.filesInBatch} images)…
+        </p>
+      )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

@@ -138,6 +138,20 @@ porcelain/marble-look/porcelain-marble-look-0002.webp
 
 ---
 
+### Bulk upload failed / health check timeout / images in R2 but not on site
+
+**Cause:** Uploading dozens of images in one request blocks the API. On Render, the instance stops responding to `/api/health` for 5+ seconds and is restarted. Images may reach R2 before the database **commit** (which only ran at the end), so the catalog stays empty.
+
+**Fix:**
+
+1. Deploy the latest code (chunked DB commits + frontend batches of 8).
+2. In **Admin → Products**, confirm nothing was saved (refresh the list).
+3. Re-upload in smaller sets (the UI now batches automatically). Or upload ~10 images at a time manually.
+4. Optional: delete orphan objects in the R2 bucket under `{category}/{subcategory}/` for that failed run (they have no matching products).
+5. On Render, consider increasing the health check timeout in the API service settings if you still hit limits.
+
+---
+
 ### Design number collision
 
 **Cause:** Manual design # already exists.

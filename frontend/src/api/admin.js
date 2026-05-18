@@ -27,6 +27,16 @@ export function uploadProductImage({ file, product_category, subcategory, design
   return apiUpload("/api/admin/upload-image", form);
 }
 
+const BULK_BATCH_SIZE = 8;
+
+function chunkFiles(files, size) {
+  const batches = [];
+  for (let i = 0; i < files.length; i += size) {
+    batches.push(files.slice(i, i + size));
+  }
+  return batches;
+}
+
 export function bulkUploadProducts({ files, product_category, subcategory, company_name, dimensions_options }) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
@@ -35,6 +45,36 @@ export function bulkUploadProducts({ files, product_category, subcategory, compa
   form.append("company_name", company_name);
   form.append("dimensions_options", dimensions_options || "");
   return apiUpload("/api/admin/products/bulk-upload", form);
+}
+
+/** Upload in small batches so Render free tier does not kill the API mid-request. */
+export async function bulkUploadProductsBatched(
+  { files, product_category, subcategory, company_name, dimensions_options },
+  { onProgress } = {}
+) {
+  const batches = chunkFiles(files, BULK_BATCH_SIZE);
+  let count = 0;
+  const warnings = new Set();
+
+  for (let i = 0; i < batches.length; i += 1) {
+    onProgress?.({
+      batch: i + 1,
+      totalBatches: batches.length,
+      filesInBatch: batches[i].length,
+      totalFiles: files.length,
+    });
+    const result = await bulkUploadProducts({
+      files: batches[i],
+      product_category,
+      subcategory,
+      company_name,
+      dimensions_options,
+    });
+    count += result.count ?? 0;
+    (result.warnings || []).forEach((w) => warnings.add(w));
+  }
+
+  return { count, warnings: [...warnings] };
 }
 
 export function fetchAdminProducts() {

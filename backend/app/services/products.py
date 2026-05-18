@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,7 @@ from app.services.design_numbers import (
     default_design_name,
     design_name_from_filename,
 )
-from app.services.images import read_and_convert_to_webp
+from app.services.images import read_upload_as_webp
 from app.services.image_metadata import normalize_image_fields
 from app.storage.r2 import is_r2_configured, upload_product_image
 from app.utils.paths import build_product_image_key
@@ -69,8 +71,13 @@ async def upload_image_for_product(
         design_number,
         use_fixed_filename=settings.r2_use_fixed_image_name,
     )
-    body, content_type = read_and_convert_to_webp(file)
-    image_url = upload_product_image(object_key=object_key, body=body, content_type=content_type)
+    body, content_type = await read_upload_as_webp(file)
+    image_url = await asyncio.to_thread(
+        upload_product_image,
+        object_key=object_key,
+        body=body,
+        content_type=content_type,
+    )
     return image_url, object_key
 
 
@@ -145,44 +152,62 @@ async def bulk_create_from_images(
     sub = subcategory.strip()
     design_numbers = allocate_design_numbers(db, category, sub, len(files))
     created: list[Product] = []
-    uploaded_keys: list[str] = []
+    chunk_size = max(1, settings.bulk_upload_chunk_size)
 
-    try:
-        for upload, dn in zip(files, design_numbers, strict=True):
-            image_url, object_key = await upload_image_for_product(
-                file=upload,
-                product_category=category,
-                subcategory=sub,
-                design_number=dn,
-            )
-            uploaded_keys.append(object_key)
-            data = build_product_data(
-                db,
-                product_category=category,
-                subcategory=sub,
-                company_name=company_name,
-                dimensions_options=dimensions_options,
-                design_number=dn,
-                design_name=None,
-                image_url=image_url,
-                image_object_key=object_key,
-                filename=upload.filename,
-            )
-            product = Product(**data)
-            db.add(product)
-            created.append(product)
+    for chunk_start in range(0, len(files), chunk_size):
+        chunk_files = files[chunk_start : chunk_start + chunk_size]
+        chunk_numbers = design_numbers[chunk_start : chunk_start + chunk_size]
+        chunk_created: list[Product] = []
+        chunk_keys: list[str] = []
 
-        db.commit()
-        for product in created:
-            db.refresh(product)
-        return created
-    except Exception:
-        db.rollback()
-        from app.storage.r2 import delete_object
+        try:
+            for upload, dn in zip(chunk_files, chunk_numbers, strict=True):
+                image_url, object_key = await upload_image_for_product(
+                    file=upload,
+                    product_category=category,
+                    subcategory=sub,
+                    design_number=dn,
+                )
+                chunk_keys.append(object_key)
+                data = build_product_data(
+                    db,
+                    product_category=category,
+                    subcategory=sub,
+                    company_name=company_name,
+                    dimensions_options=dimensions_options,
+                    design_number=dn,
+                    design_name=None,
+                    image_url=image_url,
+                    image_object_key=object_key,
+                    filename=upload.filename,
+                )
+                product = Product(**data)
+                db.add(product)
+                chunk_created.append(product)
 
-        for key in uploaded_keys:
-            try:
-                delete_object(key)
-            except Exception:
-                pass
-        raise
+            db.commit()
+            for product in chunk_created:
+                db.refresh(product)
+            created.extend(chunk_created)
+        except Exception as exc:
+            db.rollback()
+            from app.storage.r2 import delete_object
+
+            for key in chunk_keys:
+                try:
+                    delete_object(key)
+                except Exception:
+                    pass
+
+            saved = len(created)
+            if saved:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=(
+                        f"Bulk upload failed after saving {saved} product(s). "
+                        f"Refresh the admin list — do not retry the same batch without checking. "
+                        f"Cause: {exc}"
+                    ),
+                ) from exc
+            raise
+    return created

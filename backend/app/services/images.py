@@ -1,3 +1,4 @@
+import asyncio
 import io
 from typing import Tuple
 
@@ -13,14 +14,13 @@ ALLOWED_CONTENT_TYPES = {
 }
 
 
-def read_and_convert_to_webp(file: UploadFile) -> Tuple[bytes, str]:
-    if file.content_type and file.content_type not in ALLOWED_CONTENT_TYPES:
+def convert_bytes_to_webp(raw: bytes, content_type: str | None) -> Tuple[bytes, str]:
+    if content_type and content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported image type: {file.content_type}. Use JPEG, PNG, WebP, or GIF.",
+            detail=f"Unsupported image type: {content_type}. Use JPEG, PNG, WebP, or GIF.",
         )
 
-    raw = file.file.read()
     if not raw:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file uploaded")
     if len(raw) > MAX_UPLOAD_BYTES:
@@ -40,8 +40,22 @@ def read_and_convert_to_webp(file: UploadFile) -> Tuple[bytes, str]:
         out = io.BytesIO()
         image.save(out, format="WEBP", quality=85, method=6)
         return out.getvalue(), "image/webp"
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not process image. Upload a valid photo file.",
         ) from exc
+
+
+def read_and_convert_to_webp(file: UploadFile) -> Tuple[bytes, str]:
+    """Synchronous conversion (local scripts). Prefer read_upload_as_webp in request handlers."""
+    raw = file.file.read()
+    return convert_bytes_to_webp(raw, file.content_type)
+
+
+async def read_upload_as_webp(file: UploadFile) -> Tuple[bytes, str]:
+    """Convert upload to WebP without blocking the event loop (keeps health checks responsive)."""
+    raw = await file.read()
+    return await asyncio.to_thread(convert_bytes_to_webp, raw, file.content_type)
