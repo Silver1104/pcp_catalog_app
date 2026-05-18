@@ -89,7 +89,8 @@ export default function BulkUploadForm({ onDone, onCancel, r2Configured }) {
         <h3 className="font-display text-lg font-semibold text-brand-900">Bulk upload images</h3>
         <p className="mt-1 text-sm text-brand-500">
           Upload multiple images for one category + subcategory. Design numbers and names are assigned
-          automatically in sequence. Large sets upload in batches of 8 to stay within server limits.
+          automatically in sequence (names like Subcategory-1, Subcategory-2). Large sets upload in
+          batches of 8 to stay within server limits.
         </p>
       </div>
 

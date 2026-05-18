@@ -70,10 +70,20 @@ def assert_design_number_available(
         )
 
 
-def default_design_name(subcategory: str, design_number: str) -> str:
+def _sequence_label(design_number: str) -> str:
     seq_match = _SEQ_SUFFIX.search(design_number)
-    label = seq_match.group(1).lstrip("0") or "1" if seq_match else design_number
-    return f"{subcategory.strip()} — Design {label}"
+    if seq_match:
+        return seq_match.group(1).lstrip("0") or "1"
+    return design_number
+
+
+def bulk_design_name(subcategory: str, design_number: str) -> str:
+    """Display name for bulk uploads: {Subcategory}-{serialized number}."""
+    return f"{subcategory.strip()}-{_sequence_label(design_number)}"
+
+
+def default_design_name(subcategory: str, design_number: str) -> str:
+    return bulk_design_name(subcategory, design_number)
 
 
 def design_name_from_filename(filename: str, subcategory: str, design_number: str) -> str:

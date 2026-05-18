@@ -9,6 +9,7 @@ from app.services.design_numbers import (
     allocate_design_number,
     allocate_design_numbers,
     assert_design_number_available,
+    bulk_design_name,
     default_design_name,
     design_name_from_filename,
 )
@@ -176,10 +177,9 @@ async def bulk_create_from_images(
                     company_name=company_name,
                     dimensions_options=dimensions_options,
                     design_number=dn,
-                    design_name=None,
+                    design_name=bulk_design_name(sub, dn),
                     image_url=image_url,
                     image_object_key=object_key,
-                    filename=upload.filename,
                 )
                 product = Product(**data)
                 db.add(product)
